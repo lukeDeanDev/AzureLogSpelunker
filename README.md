@@ -20,9 +20,17 @@ Developed for Microsoft Visual Studio 2012 & .NET 4.5.  YMMV
 
 ## Installation
 
+#Source
 Clone this repository with a git client.
 Run msbuild in the root of the project.  NuGet should fetch all dependencies.
 AzureLogSpelunker.exe is the executable.
+
+#Binary
+If you don't want to build this yourself, there are binary installers in
+the Releases directory.
+* You'll still need to procure a compatible version of the .NET framework yourself.
+* It's a per-user installation, so administrative privileges are unnecessary.
+* The uninstaller does not remove your configuration settings.
 
 ## Configuration
 

@@ -20,6 +20,7 @@ Global
 		{AB94FE42-F3D8-41D6-B3AC-A49D44B39E7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB94FE42-F3D8-41D6-B3AC-A49D44B39E7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB94FE42-F3D8-41D6-B3AC-A49D44B39E7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB94FE42-F3D8-41D6-B3AC-A49D44B39E7E}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

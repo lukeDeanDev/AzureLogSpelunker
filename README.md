@@ -26,8 +26,8 @@ Run msbuild in the root of the project.  NuGet should fetch all dependencies.
 AzureLogSpelunker.exe is the executable.
 
 ##Binary
-If you don't want to build this yourself, there are binary installers in
-the Releases directory.
+If you don't want to build this yourself, installers are available at
+https://github.com/SageLukeDean/AzureLogSpelunker/releases
 * You'll still need to procure a compatible version of the .NET framework yourself.
 * It's a per-user installation, so administrative privileges are unnecessary.
 * The uninstaller does not remove your configuration settings.

@@ -8,6 +8,7 @@
 #define MySourceDir "..\AzureLogSpelunker\bin\Release\"
 #define MyLicenseFile "..\LICENSE"
 #define MyAppVersion GetFileVersion(MySourceDir + MyAppExeName)
+#define MyChangelog "..\CHANGELOG.html"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -44,6 +45,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ;Source: "{#MySourceDir}*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#MyLicenseFile}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyChangelog}"; DestDir: "{app}"; Flags: ignoreversion isreadme
 Source: "{#MySourceDir}AzureLogSpelunker.exe"; DestDir: "{app}"
 Source: "{#MySourceDir}AzureLogSpelunker.exe.config"; DestDir: "{app}"
 Source: "{#MySourceDir}x64\SQLite.Interop.dll"; DestDir: "{app}\x64"

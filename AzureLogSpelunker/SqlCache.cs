@@ -55,6 +55,15 @@ namespace AzureLogSpelunker
             }
         }
 
+        public long CacheCount()
+        {
+            const string sql = "SELECT COUNT(*) FROM " + TableName;
+            using (var query = new SQLiteCommand(sql, Connection))
+            {
+                return (long)query.ExecuteScalar();
+            }
+        }
+
         //This method is vulnerable to SQL injection attacks, but that's kinda the point of this application.
         public string ApplyFilters(DataTable dataTable)
         {
@@ -67,12 +76,12 @@ namespace AzureLogSpelunker
 
         public string ComputeSql()
         {
-            return "SELECT * FROM " + TableName + WhereClause();
+            return "SELECT RowId,* FROM " + TableName + WhereClause();
         }
 
         private void ClearCache()
         {
-            var deleteSql = "DELETE FROM " + TableName;
+            const string deleteSql = "DELETE FROM " + TableName;
             var deleteQuery = new SQLiteCommand(deleteSql, Connection);
             deleteQuery.ExecuteNonQuery();
         }
@@ -80,7 +89,7 @@ namespace AzureLogSpelunker
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
         private static SQLiteConnection InitializeDatabase()
         {
-            var connectionString = "Data Source=':memory:';";
+            const string connectionString = "Data Source=':memory:';";
             var connection = new SQLiteConnection(connectionString).OpenAndReturn();
 
             var properties = Utility.GetProperties<LogEntity>();

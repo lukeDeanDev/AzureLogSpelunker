@@ -113,3 +113,6 @@ _ReSharper*/
 #OS junk files
 Thumbs.db
 *.DS_Store
+
+#My inno Releases folder
+Releases/

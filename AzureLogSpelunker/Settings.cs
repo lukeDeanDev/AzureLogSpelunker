@@ -32,15 +32,27 @@ namespace AzureLogSpelunker
 
     public class Settings : ISettings
     {
-        private string _connectionString;
-        const string ConnectionStringsTable = "ConnectionStrings";
-        const string FiltersTable = "Filters";
-        const string UiTable = "UI";
-        const string ColumnsTable = "Columns";
+        private readonly string _connectionString;
+        private const string ConnectionStringsTable = "ConnectionStrings";
+        private const string FiltersTable = "Filters";
+        private const string UiTable = "UI";
+        private const string ColumnsTable = "Columns";
 
         public Settings()
         {
-            InitializeDatabase();
+            var applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var myApplicationDataPath = Path.Combine(applicationDataPath, "AzureLogSpelunker");
+            Directory.CreateDirectory(myApplicationDataPath);
+            var myDataFile = Path.Combine(myApplicationDataPath, "AzureLogSpelunker.db");
+            _connectionString = "Data Source=" + myDataFile + ";";
+
+            using (var connection = new SQLiteConnection(_connectionString).OpenAndReturn())
+            {
+                InitializeConnectionStringsTable(connection);
+                InitializeFiltersTable(connection);
+                InitializeUiTable(connection);
+                InitializeColumnsTable(connection);
+            }
         }
 
         #region ConnectionStrings
@@ -49,7 +61,7 @@ namespace AzureLogSpelunker
             var list = new List<string>();
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "SELECT Name FROM " + ConnectionStringsTable + " ;";
+                const string sql = "SELECT Name FROM " + ConnectionStringsTable + " ;";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     using (var reader = cmd.ExecuteReader())
@@ -69,7 +81,7 @@ namespace AzureLogSpelunker
             string connectionString = "";
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "SELECT ConnectionString FROM " + ConnectionStringsTable + " WHERE Name == @Name;";
+                const string sql = "SELECT ConnectionString FROM " + ConnectionStringsTable + " WHERE Name == @Name;";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@Name", EncodeText(name));
@@ -89,8 +101,7 @@ namespace AzureLogSpelunker
         {
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "INSERT OR REPLACE INTO " + ConnectionStringsTable;
-                sql += " (Name, ConnectionString) VALUES (@Name, @ConnectionString);";
+                const string sql = "INSERT OR REPLACE INTO " + ConnectionStringsTable + " (Name, ConnectionString) VALUES (@Name, @ConnectionString);";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@Name", EncodeText(name));
@@ -104,7 +115,7 @@ namespace AzureLogSpelunker
         {
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "DELETE FROM " + ConnectionStringsTable + " WHERE Name == @Name;";
+                const string sql = "DELETE FROM " + ConnectionStringsTable + " WHERE Name == @Name;";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@Name", EncodeText(name));
@@ -121,7 +132,7 @@ namespace AzureLogSpelunker
             var filters = new List<Filter>();
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "SELECT * FROM " + FiltersTable + " ORDER BY Position";
+                const string sql = "SELECT * FROM " + FiltersTable + " ORDER BY Position";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     using (var reader = cmd.ExecuteReader())
@@ -146,7 +157,7 @@ namespace AzureLogSpelunker
         {
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "DELETE FROM " + FiltersTable + " WHERE FilterText == @FilterText";
+                const string sql = "DELETE FROM " + FiltersTable + " WHERE FilterText == @FilterText";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@FilterText", EncodeText(filterText));
@@ -159,7 +170,7 @@ namespace AzureLogSpelunker
         {
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) VALUES (@FilterText)";
+                const string sql = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) VALUES (@FilterText)";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@FilterText", EncodeText(filterText));
@@ -172,9 +183,7 @@ namespace AzureLogSpelunker
         {
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "UPDATE " + FiltersTable + " SET";
-                sql += " Position = @Position, Active = @Active";
-                sql += " WHERE FilterText == @FilterText";
+                const string sql = "UPDATE " + FiltersTable + " SET Position = @Position, Active = @Active WHERE FilterText == @FilterText";
                 var preparedQuery = new SQLiteCommand(sql, conn);
                 preparedQuery.Parameters.Add("@Position", DbType.Int32);
                 preparedQuery.Parameters.Add("@Active", DbType.Boolean);
@@ -203,7 +212,7 @@ namespace AzureLogSpelunker
             var columns = new List<Column>();
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "SELECT * FROM " + ColumnsTable + " ORDER BY Position, Active";
+                const string sql = "SELECT * FROM " + ColumnsTable + " ORDER BY Position, Active";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     using (var reader = cmd.ExecuteReader())
@@ -228,9 +237,7 @@ namespace AzureLogSpelunker
         {
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "UPDATE " + ColumnsTable + " SET";
-                sql += " Position = @Position, Active = @Active";
-                sql += " WHERE ColumnName == @ColumnName";
+                const string sql = "UPDATE " + ColumnsTable + " SET Position = @Position, Active = @Active WHERE ColumnName == @ColumnName";
                 var preparedQuery = new SQLiteCommand(sql, conn);
                 preparedQuery.Parameters.Add("@Position", DbType.Int32);
                 preparedQuery.Parameters.Add("@Active", DbType.Boolean);
@@ -252,249 +259,206 @@ namespace AzureLogSpelunker
 
         #endregion Columns
 
-        #region Utc
+        #region Ui Parameters
 
         public bool GetUtc()
         {
-            var utcValue = false;
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "SELECT Value FROM " + UiTable + " WHERE Parameter == 'Utc'";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Boolean.TryParse(reader["Value"] as string, out utcValue);
-                        }
-                    }
-                }
-            }
+            bool utcValue;
+            Boolean.TryParse(GetUiParameter("Utc"), out utcValue);
             return utcValue;
         }
 
         public int SetUtc(bool utcValue)
         {
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "INSERT OR REPLACE INTO " + UiTable + " (Parameter,Value) VALUES ('Utc','" + utcValue + "')";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    return cmd.ExecuteNonQuery();
-                }
-            }
+            return SetUiParameter("Utc", utcValue.ToString());
         }
 
-        #endregion Utc
-
-        #region Wordwrap
         public bool GetWordwrap()
         {
-            bool wordwrapValue = false;
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "SELECT Value FROM " + UiTable + " WHERE Parameter == 'Wordwrap'";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            Boolean.TryParse(reader["Value"] as string, out wordwrapValue);
-                        }
-                    }
-                }
-            }
+            bool wordwrapValue;
+            Boolean.TryParse(GetUiParameter("Wordwrap"), out wordwrapValue);
             return wordwrapValue;
         }
 
         public int SetWordwrap(bool wordwrapValue)
         {
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "INSERT OR REPLACE INTO " + UiTable + " (Parameter,Value) VALUES ('Wordwrap','" + wordwrapValue + "')";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    return cmd.ExecuteNonQuery();
-                }
-            }
+            return SetUiParameter("Wordwrap", wordwrapValue.ToString());
         }
-
-        #endregion Wordwrap
-
-        #region LastConnectionNickname
 
         public string GetLastConnectionNickname()
         {
-            string lastConnectionNickname = "";
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "SELECT Value FROM " + UiTable + " WHERE Parameter == 'LastConnectionNickname'";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            lastConnectionNickname = DecodeText(reader["Value"] as string);
-                        }
-                    }
-                }
-            }
-            return lastConnectionNickname;
+            return GetUiParameter("LastConnectionNickname");
         }
 
         public int SetLastConnectionNickname(string lastConnectionNickname)
         {
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "INSERT OR REPLACE INTO " + UiTable + " (Parameter,Value) VALUES ('LastConnectionNickname',@LastConnectionNickname)";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("@LastConnectionNickname", EncodeText(lastConnectionNickname));
-                    return cmd.ExecuteNonQuery();
-                }
-            }
+            return SetUiParameter("LastConnectionNickname", lastConnectionNickname);
         }
-
-        #endregion LastConnectionNickname
-
-        #region LastExportPath
 
         public string GetLastExportPath()
         {
-            var lastExportPath = "";
-            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
-            {
-                var sql = "SELECT Value FROM " + UiTable + " WHERE Parameter == 'LastExportPath'";
-                using (var cmd = new SQLiteCommand(sql, conn))
-                {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            lastExportPath = DecodeText(reader["Value"] as string);
-                        }
-                    }
-                }
-            }
-            return lastExportPath;
+            return GetUiParameter("LastExportPath");
         }
 
         public int SetLastExportPath(string lastExportPath)
         {
+            return SetUiParameter("LastExportPath", lastExportPath);
+        }
+
+        private string GetUiParameter(string parameter)
+        {
+            var returnValue = "";
             using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
             {
-                var sql = "INSERT OR REPLACE INTO " + UiTable + " (Parameter,Value) VALUES ('LastExportPath',@LastExportPath)";
+                const string sql = "SELECT Value FROM " + UiTable + " WHERE Parameter == @Parameter";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@LastExportPath", EncodeText(lastExportPath));
+                    cmd.Parameters.AddWithValue("@Parameter", parameter);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            returnValue = DecodeText(reader["Value"] as string);
+                        }
+                    }
+                }
+            }
+            return returnValue;
+        }
+
+        private int SetUiParameter(string parameter, string value)
+        {
+            using (var conn = new SQLiteConnection(_connectionString).OpenAndReturn())
+            {
+                const string sql = "INSERT OR REPLACE INTO " + UiTable + " (Parameter,Value) VALUES (@Parameter, @Value)";
+                using (var cmd = new SQLiteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Parameter", parameter);
+                    cmd.Parameters.AddWithValue("@Value", EncodeText(value));
                     return cmd.ExecuteNonQuery();
                 }
             }
         }
+        #endregion Ui Parameters
 
-        #endregion LastExportPath
-
-        private void InitializeDatabase()
+        #region Initialization
+        private static void InitializeConnectionStringsTable(SQLiteConnection connection)
         {
-            var applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var myApplicationDataPath = Path.Combine(applicationDataPath, "AzureLogSpelunker");
-            Directory.CreateDirectory(myApplicationDataPath);
-            var myDataFile = Path.Combine(myApplicationDataPath, "AzureLogSpelunker.db");
-            _connectionString = "Data Source=" + myDataFile + ";";
+            const string sqlCreate = "CREATE TABLE IF NOT EXISTS " + ConnectionStringsTable + " (Name TEXT PRIMARY KEY , ConnectionString TEXT)";
+            new SQLiteCommand(sqlCreate, connection).ExecuteNonQuery();
 
-            using (var connection = new SQLiteConnection(_connectionString).OpenAndReturn())
+            const string sqlInsert = "INSERT OR REPLACE INTO " + ConnectionStringsTable + " (Name, ConnectionString) VALUES (@Name, @ConnectionString);";
+            using (var cmd = new SQLiteCommand(sqlInsert, connection))
             {
-                var sql = "CREATE TABLE IF NOT EXISTS " + ConnectionStringsTable + " ";
-                sql += "(Name TEXT PRIMARY KEY , ConnectionString TEXT)";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@Name", EncodeText("UseDevelopmentStorage"));
+                cmd.Parameters.AddWithValue("@ConnectionString", EncodeText("UseDevelopmentStorage=true"));
+                cmd.ExecuteNonQuery();
 
-                sql = "INSERT OR REPLACE INTO " + ConnectionStringsTable + " (Name, ConnectionString) ";
-                sql += "VALUES ('" + EncodeText("UseDevelopmentStorage") + "', '" + EncodeText("UseDevelopmentStorage=true") + "');";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@Name", EncodeText("Example"));
+                cmd.Parameters.AddWithValue("@ConnectionString", EncodeText("DefaultEndpointsProtocol=https;AccountName=foo;AccountKey=barbarbarbarbar=="));
+                cmd.ExecuteNonQuery();
+            }
+        }
 
-                sql = "INSERT OR REPLACE INTO " + ConnectionStringsTable + " (Name, ConnectionString) ";
-                sql += "VALUES ('" + EncodeText("Example") + "', '" + EncodeText("DefaultEndpointsProtocol=https;AccountName=foo;AccountKey=barbarbarbarbar==") + "');";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
+        private static void InitializeFiltersTable(SQLiteConnection connection)
+        {
+            const string sqlCreate = "CREATE TABLE IF NOT EXISTS " + FiltersTable + " (FilterText TEXT PRIMARY KEY, Active INT, Position INT)";
+            new SQLiteCommand(sqlCreate, connection).ExecuteNonQuery();
+
+            long count;
+            const string sqlCount = "SELECT COUNT(*) FROM " + FiltersTable;
+            using (var cmd = new SQLiteCommand(sqlCount, connection))
+            {
+                count = (long)cmd.ExecuteScalar();
             }
 
-            using (var connection = new SQLiteConnection(_connectionString).OpenAndReturn())
+            if (count == 0)
             {
-                var sql = "CREATE TABLE IF NOT EXISTS " + FiltersTable + " ";
-                sql += "(FilterText TEXT PRIMARY KEY, Active INT, Position INT)";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
-
-                long count = 0;
-                sql = "SELECT COUNT(*) FROM " + FiltersTable;
-                using (var cmd = new SQLiteCommand(sql, connection))
+                const string sqlInsert = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) VALUES (@FilterText)";
+                using (var cmd = new SQLiteCommand(sqlInsert, connection))
                 {
-                    count = (long)cmd.ExecuteScalar();
-                }
-
-                if (count == 0)
-                {
-                    sql = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) ";
-                    sql += "VALUES ('" + EncodeText("NOT(Message == 'INFORMATION: <Complaint> Add hard complaint :0 ; TraceSource ''w3wp.exe'' event')") + "')";
-                    new SQLiteCommand(sql, connection).ExecuteNonQuery();
-
-                    sql = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) ";
-                    sql += "VALUES ('" + EncodeText("NOT(Message LIKE 'INFORMATION: <CASClient> Updated partition table to %')") + "')";
-                    new SQLiteCommand(sql, connection).ExecuteNonQuery();
-
-                    sql = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) ";
-                    sql += "VALUES ('" + EncodeText("Role == \"somerole\"") + "')";
-                    new SQLiteCommand(sql, connection).ExecuteNonQuery();
-
-                    sql = "INSERT OR IGNORE INTO " + FiltersTable + " (FilterText) ";
-                    sql += "VALUES ('" + EncodeText("DeploymentId == \"something\"") + "')";
-                    new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@FilterText", EncodeText("NOT(Message == 'INFORMATION: <Complaint> Add hard complaint :0 ; TraceSource ''w3wp.exe'' event')"));
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@FilterText", EncodeText("NOT(Message LIKE 'INFORMATION: <CASClient> Updated partition table to %')"));
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@FilterText", EncodeText("Role == \"somerole\""));
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@FilterText", EncodeText("DeploymentId == \"something\""));
+                    cmd.ExecuteNonQuery();
                 }
             }
+        }
 
-            using (var connection = new SQLiteConnection(_connectionString).OpenAndReturn())
+        private static void InitializeUiTable(SQLiteConnection connection)
+        {
+            const string sqlCreate = "CREATE TABLE IF NOT EXISTS " + UiTable + " (Parameter TEXT PRIMARY KEY, Value TEXT)";
+            new SQLiteCommand(sqlCreate, connection).ExecuteNonQuery();
+
+            const string sqlInsert = "INSERT OR IGNORE INTO " + UiTable + " (Parameter, Value) VALUES (@Parameter, @Value)";
+            using (var cmd = new SQLiteCommand(sqlInsert, connection))
             {
-                var sql = "CREATE TABLE IF NOT EXISTS " + UiTable + " ";
-                sql += "(Parameter TEXT PRIMARY KEY, Value TEXT)";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
-
-                sql = "INSERT OR IGNORE INTO " + UiTable + " (Parameter, Value) ";
-                sql += "VALUES ('LastConnectionNickname', '" + EncodeText("Example") + "')";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@Parameter", "LastConnectionNickname");
+                cmd.Parameters.AddWithValue("@Value", EncodeText("Example"));
+                cmd.ExecuteNonQuery();
             }
+        }
 
-            using (var connection = new SQLiteConnection(_connectionString).OpenAndReturn())
+        private static void InitializeColumnsTable(SQLiteConnection connection)
+        {
+            const string sqlCreate = "CREATE TABLE IF NOT EXISTS " + ColumnsTable + " (ColumnName TEXT PRIMARY KEY, Active INT, Position INT)";
+            new SQLiteCommand(sqlCreate, connection).ExecuteNonQuery();
+
+            const string sqlInsert = "INSERT OR IGNORE INTO " + ColumnsTable + " (ColumnName, Active, Position) VALUES (@ColumnName, @Active, @Position) ";
+            using (var cmd = new SQLiteCommand(sqlInsert, connection))
             {
-                var sql = "CREATE TABLE IF NOT EXISTS " + ColumnsTable + " ";
-                sql += "(ColumnName TEXT PRIMARY KEY, Active INT, Position INT)";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@ColumnName", EncodeText("Timestamp"));
+                cmd.Parameters.AddWithValue("@Active", 1);
+                cmd.Parameters.AddWithValue("@Position", 0);
+                cmd.ExecuteNonQuery();
 
-                sql = "INSERT OR IGNORE INTO " + ColumnsTable + " (ColumnName, Active, Position) ";
-                sql += "VALUES ('" + EncodeText("Timestamp") + "', 1, 0) ";
-                sql += ", ('" + EncodeText("DeploymentId") + "', 1, 1) ";
-                sql += ", ('" + EncodeText("Role") + "', 1, 2) ";
-                sql += ", ('" + EncodeText("RoleInstance") + "', 1, 3) ";
-                sql += ", ('" + EncodeText("Message") + "', 1, 4) ";
-                new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@ColumnName", EncodeText("DeploymentId"));
+                cmd.Parameters.AddWithValue("@Active", 1);
+                cmd.Parameters.AddWithValue("@Position", 1);
+                cmd.ExecuteNonQuery();
+
+                cmd.Parameters.AddWithValue("@ColumnName", EncodeText("Role"));
+                cmd.Parameters.AddWithValue("@Active", 1);
+                cmd.Parameters.AddWithValue("@Position", 2);
+                cmd.ExecuteNonQuery();
+
+                cmd.Parameters.AddWithValue("@ColumnName", EncodeText("RoleInstance"));
+                cmd.Parameters.AddWithValue("@Active", 1);
+                cmd.Parameters.AddWithValue("@Position", 3);
+                cmd.ExecuteNonQuery();
+
+                cmd.Parameters.AddWithValue("@ColumnName", EncodeText("Message"));
+                cmd.Parameters.AddWithValue("@Active", 1);
+                cmd.Parameters.AddWithValue("@Position", 4);
+                cmd.ExecuteNonQuery();
+
+                cmd.Parameters.AddWithValue("@ColumnName", EncodeText("RowId")); //The SQLite internal RowId
+                cmd.Parameters.AddWithValue("@Active", 0);
+                cmd.Parameters.AddWithValue("@Position", 1000);
+                cmd.ExecuteNonQuery();
 
                 var columnInfo = Utility.GetProperties<LogEntity>();
                 foreach (var info in columnInfo)
                 {
-                    sql = "INSERT OR IGNORE INTO " + ColumnsTable + " (ColumnName, Position) ";
-                    sql += "VALUES ('" + EncodeText(info.Name) + "', 1000) ";
-                    new SQLiteCommand(sql, connection).ExecuteNonQuery();
+                    cmd.Parameters.AddWithValue("@ColumnName", EncodeText(info.Name));
+                    cmd.Parameters.AddWithValue("@Active", 0);
+                    cmd.Parameters.AddWithValue("@Position", 1000);
+                    cmd.ExecuteNonQuery();
                 }
             }
-
         }
+        #endregion Initialization
 
-        private string EncodeText(string plainText)
+        private static string EncodeText(string plainText)
         {
             return Uri.EscapeDataString(plainText);
         }
 
-        private string DecodeText(string encoded)
+        private static string DecodeText(string encoded)
         {
             return Uri.UnescapeDataString(encoded);
         }

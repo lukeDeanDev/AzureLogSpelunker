@@ -53,6 +53,8 @@
             this.btnApplySqlFilters = new System.Windows.Forms.Button();
             this.azureBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.grpAzure = new System.Windows.Forms.GroupBox();
+            this.RecordsCached = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.grpLocalSqlFilters = new System.Windows.Forms.GroupBox();
             this.label6 = new System.Windows.Forms.Label();
             this.sqlComputed = new System.Windows.Forms.TextBox();
@@ -257,7 +259,7 @@
             // 
             this.btUp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btUp.Image = ((System.Drawing.Image)(resources.GetObject("btUp.Image")));
-            this.btUp.Location = new System.Drawing.Point(776, 124);
+            this.btUp.Location = new System.Drawing.Point(776, 126);
             this.btUp.Name = "btUp";
             this.btUp.Size = new System.Drawing.Size(26, 26);
             this.btUp.TabIndex = 4;
@@ -269,7 +271,7 @@
             // 
             this.btDown.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btDown.Image = ((System.Drawing.Image)(resources.GetObject("btDown.Image")));
-            this.btDown.Location = new System.Drawing.Point(776, 156);
+            this.btDown.Location = new System.Drawing.Point(776, 158);
             this.btDown.Name = "btDown";
             this.btDown.Size = new System.Drawing.Size(26, 26);
             this.btDown.TabIndex = 5;
@@ -282,7 +284,7 @@
             this.btnApplySqlFilters.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnApplySqlFilters.Image = ((System.Drawing.Image)(resources.GetObject("btnApplySqlFilters.Image")));
             this.btnApplySqlFilters.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnApplySqlFilters.Location = new System.Drawing.Point(661, 258);
+            this.btnApplySqlFilters.Location = new System.Drawing.Point(661, 260);
             this.btnApplySqlFilters.Name = "btnApplySqlFilters";
             this.btnApplySqlFilters.Size = new System.Drawing.Size(124, 32);
             this.btnApplySqlFilters.TabIndex = 6;
@@ -300,6 +302,8 @@
             // 
             this.grpAzure.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpAzure.Controls.Add(this.RecordsCached);
+            this.grpAzure.Controls.Add(this.label7);
             this.grpAzure.Controls.Add(this.ConnectionNickname);
             this.grpAzure.Controls.Add(this.label1);
             this.grpAzure.Controls.Add(this.ConnectionString);
@@ -316,10 +320,33 @@
             this.grpAzure.Controls.Add(this.EndPartitionKey);
             this.grpAzure.Location = new System.Drawing.Point(12, 12);
             this.grpAzure.Name = "grpAzure";
-            this.grpAzure.Size = new System.Drawing.Size(808, 140);
+            this.grpAzure.Size = new System.Drawing.Size(808, 154);
             this.grpAzure.TabIndex = 0;
             this.grpAzure.TabStop = false;
             this.grpAzure.Text = "Step 1: Fetch from Azure";
+            // 
+            // RecordsCached
+            // 
+            this.RecordsCached.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.RecordsCached.Location = new System.Drawing.Point(657, 125);
+            this.RecordsCached.Name = "RecordsCached";
+            this.RecordsCached.ReadOnly = true;
+            this.RecordsCached.Size = new System.Drawing.Size(132, 20);
+            this.RecordsCached.TabIndex = 2;
+            this.RecordsCached.TabStop = false;
+            this.RecordsCached.Text = "0";
+            this.RecordsCached.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.RecordsCached, "Number of records currently in the SQLite cache");
+            // 
+            // label7
+            // 
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(578, 128);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(73, 13);
+            this.label7.TabIndex = 3;
+            this.label7.Text = "Rows cached";
             // 
             // grpLocalSqlFilters
             // 
@@ -337,9 +364,9 @@
             this.grpLocalSqlFilters.Controls.Add(this.btDelete);
             this.grpLocalSqlFilters.Controls.Add(this.btDown);
             this.grpLocalSqlFilters.Controls.Add(this.btUp);
-            this.grpLocalSqlFilters.Location = new System.Drawing.Point(12, 158);
+            this.grpLocalSqlFilters.Location = new System.Drawing.Point(12, 184);
             this.grpLocalSqlFilters.Name = "grpLocalSqlFilters";
-            this.grpLocalSqlFilters.Size = new System.Drawing.Size(808, 332);
+            this.grpLocalSqlFilters.Size = new System.Drawing.Size(808, 334);
             this.grpLocalSqlFilters.TabIndex = 1;
             this.grpLocalSqlFilters.TabStop = false;
             this.grpLocalSqlFilters.Text = "Step 2: Apply SQL Filters";
@@ -348,7 +375,7 @@
             // 
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(6, 210);
+            this.label6.Location = new System.Drawing.Point(6, 212);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(118, 13);
             this.label6.TabIndex = 26;
@@ -358,7 +385,7 @@
             // 
             this.sqlComputed.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.sqlComputed.Location = new System.Drawing.Point(6, 226);
+            this.sqlComputed.Location = new System.Drawing.Point(6, 228);
             this.sqlComputed.Multiline = true;
             this.sqlComputed.Name = "sqlComputed";
             this.sqlComputed.ReadOnly = true;
@@ -371,7 +398,7 @@
             // 
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(6, 187);
+            this.label5.Location = new System.Drawing.Point(6, 189);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(373, 13);
             this.label5.TabIndex = 24;
@@ -381,7 +408,7 @@
             // 
             this.sqliteHelp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.sqliteHelp.AutoSize = true;
-            this.sqliteHelp.Location = new System.Drawing.Point(645, 187);
+            this.sqliteHelp.Location = new System.Drawing.Point(645, 189);
             this.sqliteHelp.Name = "sqliteHelp";
             this.sqliteHelp.Size = new System.Drawing.Size(125, 13);
             this.sqliteHelp.TabIndex = 23;
@@ -398,7 +425,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(832, 498);
+            this.ClientSize = new System.Drawing.Size(832, 528);
             this.Controls.Add(this.grpLocalSqlFilters);
             this.Controls.Add(this.grpAzure);
             this.MinimumSize = new System.Drawing.Size(738, 457);
@@ -446,6 +473,8 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox sqlComputed;
         private System.ComponentModel.BackgroundWorker sqlBackgroundWorker;
+        private System.Windows.Forms.TextBox RecordsCached;
+        private System.Windows.Forms.Label label7;
     }
 }
 

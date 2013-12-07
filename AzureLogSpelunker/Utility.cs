@@ -8,6 +8,5 @@ namespace AzureLogSpelunker
         {
             return typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         }
-
     }
 }

@@ -16,7 +16,7 @@ Export the filtered data to XML and share your results.
 
 # Requirements
 
-Developed for Microsoft Visual Studio 2012 & .NET 4.5.  YMMV
+Developed for Microsoft Visual Studio 2013 & .NET 4.5.  YMMV
 
 # Installation
 

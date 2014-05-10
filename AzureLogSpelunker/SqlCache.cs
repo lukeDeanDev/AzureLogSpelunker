@@ -2,25 +2,32 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.IO;
 using AzureLogSpelunker.Models;
 
 namespace AzureLogSpelunker
 {
-    public class SqlCache
+    public interface ISqlCache
+    {
+        long PopulateCache(IEnumerable<LogEntity> resultSet, ISettings settings);
+        string ApplyFilters(DataTable dataTable, ISettings settings);
+        string ComputeSql(ISettings settings);
+        void Close();
+    }
+
+    public class SqlCache : ISqlCache
     {
         protected const string TableName = "LogCache";
-        protected readonly SQLiteConnection Connection;
-        protected readonly ISettings Settings;
-
-        public SqlCache(ISettings settings)
-        {
-            Connection = InitializeDatabase();
-            Settings = settings;
-        }
+        protected const string DiskCacheFile = "Cache.db";
+        protected SQLiteConnection Connection = null;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
-        public void PopulateCache(IEnumerable<LogEntity> resultSet)
+        public long PopulateCache(IEnumerable<LogEntity> resultSet, ISettings settings)
         {
+            Close();
+            Connection = GetConnection(settings);
+            InitializeDatabase(Connection);
+
             var properties = Utility.GetProperties<LogEntity>();
 
             var columnSql = "";
@@ -41,8 +48,6 @@ namespace AzureLogSpelunker
 
             using (var transaction = Connection.BeginTransaction())
             {
-                ClearCache();
-
                 foreach (var result in resultSet)
                 {
                     foreach (var info in properties)
@@ -53,49 +58,71 @@ namespace AzureLogSpelunker
                 }
                 transaction.Commit();
             }
-        }
 
-        public long CacheCount()
-        {
-            const string sql = "SELECT COUNT(*) FROM " + TableName;
-            using (var query = new SQLiteCommand(sql, Connection))
-            {
-                return (long)query.ExecuteScalar();
-            }
+            return CacheCount(Connection);
         }
 
         //This method is vulnerable to SQL injection attacks, but that's kinda the point of this application.
-        public string ApplyFilters(DataTable dataTable)
+        public string ApplyFilters(DataTable dataTable, ISettings settings)
         {
-            var sql = ComputeSql();
-            var da = new SQLiteDataAdapter(sql, Connection);
-            da.Fill(dataTable);
+            var sql = ComputeSql(settings);
+            if (Connection != null)
+            {
+                var da = new SQLiteDataAdapter(sql, Connection);
+                da.Fill(dataTable);
+            }
             dataTable.TableName = "LogEntity";
             return sql;
         }
 
-        public string ComputeSql()
+        public string ComputeSql(ISettings settings)
         {
-            return "SELECT RowId,* FROM " + TableName + WhereClause();
+            return "SELECT RowId,* FROM " + TableName + WhereClause(settings);
         }
 
-        private void ClearCache()
+        public void Close()
         {
-            const string deleteSql = "DELETE FROM " + TableName;
-            var deleteQuery = new SQLiteCommand(deleteSql, Connection);
+            if (Connection == null || Connection.State == ConnectionState.Closed) return;
+            ClearCache(Connection);
+            Connection.Close();
+        }
+
+        private static SQLiteConnection GetConnection(ISettings settings)
+        {
+            string connectionString;
+            switch (settings.GetFetchTo())
+            {
+                case "disk":
+                    var myCacheFilename = Path.Combine(settings.MyApplicationDataPath, DiskCacheFile);
+                    connectionString = "Data Source='" + myCacheFilename + "';";
+                    break;
+                default:
+                    connectionString = "Data Source=':memory:';";
+                    break;
+            }
+            return new SQLiteConnection(connectionString).OpenAndReturn();
+        }
+
+        private static void ClearCache(SQLiteConnection connection)
+        {
+            const string deleteSql = "DROP TABLE IF EXISTS " + TableName;
+            var deleteQuery = new SQLiteCommand(deleteSql, connection);
             deleteQuery.ExecuteNonQuery();
+
+            const string vacuumSql = "VACUUM";
+            var vacuumQuery = new SQLiteCommand(vacuumSql, connection);
+            vacuumQuery.ExecuteNonQuery();
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
-        private static SQLiteConnection InitializeDatabase()
+        private static void InitializeDatabase(SQLiteConnection connection)
         {
-            const string connectionString = "Data Source=':memory:';";
-            var connection = new SQLiteConnection(connectionString).OpenAndReturn();
+            ClearCache(connection);
 
             var properties = Utility.GetProperties<LogEntity>();
 
             var sql = "CREATE TABLE " + TableName;
-            bool first = true;
+            var first = true;
             foreach (var info in properties)
             {
                 sql += first ? " (" : ", ";
@@ -107,8 +134,15 @@ namespace AzureLogSpelunker
             sql += ", PRIMARY KEY (PartitionKey, RowKey)";
             sql += ")";
             new SQLiteCommand(sql, connection).ExecuteNonQuery();
+        }
 
-            return connection;
+        private static long CacheCount(SQLiteConnection connection)
+        {
+            const string sql = "SELECT COUNT(*) FROM " + TableName;
+            using (var query = new SQLiteCommand(sql, connection))
+            {
+                return (long)query.ExecuteScalar();
+            }
         }
 
         private static string SqliteTextType(Type t)
@@ -131,10 +165,10 @@ namespace AzureLogSpelunker
             throw new ApplicationException("Unexpected type: " + t);
         }
 
-        private string WhereClause()
+        private static string WhereClause(ISettings settings)
         {
             var whereClause = String.Empty;
-            foreach (var filter in Settings.GetFilters())
+            foreach (var filter in settings.GetFilters())
             {
                 if (filter.Active)
                 {

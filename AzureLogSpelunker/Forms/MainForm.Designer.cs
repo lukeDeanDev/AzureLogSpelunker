@@ -53,6 +53,10 @@
             this.btnApplySqlFilters = new System.Windows.Forms.Button();
             this.azureBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.grpAzure = new System.Windows.Forms.GroupBox();
+            this.grpTimeframe = new System.Windows.Forms.GroupBox();
+            this.grpFetchTo = new System.Windows.Forms.GroupBox();
+            this.FetchToDisk = new System.Windows.Forms.RadioButton();
+            this.FetchToMemory = new System.Windows.Forms.RadioButton();
             this.RecordsCached = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.grpLocalSqlFilters = new System.Windows.Forms.GroupBox();
@@ -63,6 +67,8 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.sqlBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this.grpAzure.SuspendLayout();
+            this.grpTimeframe.SuspendLayout();
+            this.grpFetchTo.SuspendLayout();
             this.grpLocalSqlFilters.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -132,10 +138,10 @@
             this.btnFetchFromAzure.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnFetchFromAzure.Image = ((System.Drawing.Image)(resources.GetObject("btnFetchFromAzure.Image")));
             this.btnFetchFromAzure.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnFetchFromAzure.Location = new System.Drawing.Point(661, 87);
+            this.btnFetchFromAzure.Location = new System.Drawing.Point(665, 81);
             this.btnFetchFromAzure.Name = "btnFetchFromAzure";
             this.btnFetchFromAzure.Size = new System.Drawing.Size(124, 32);
-            this.btnFetchFromAzure.TabIndex = 7;
+            this.btnFetchFromAzure.TabIndex = 6;
             this.btnFetchFromAzure.Text = "Fetch from Azure";
             this.btnFetchFromAzure.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnFetchFromAzure.UseVisualStyleBackColor = true;
@@ -145,16 +151,16 @@
             // 
             this.BeginDateTime.CustomFormat = "MM\'/\'dd\'/\'yyyy hh\':\'mm\':\'ss tt ";
             this.BeginDateTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.BeginDateTime.Location = new System.Drawing.Point(181, 84);
+            this.BeginDateTime.Location = new System.Drawing.Point(107, 18);
             this.BeginDateTime.Name = "BeginDateTime";
             this.BeginDateTime.Size = new System.Drawing.Size(174, 20);
-            this.BeginDateTime.TabIndex = 5;
+            this.BeginDateTime.TabIndex = 1;
             this.BeginDateTime.ValueChanged += new System.EventHandler(this.BeginDateTime_ValueChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(134, 87);
+            this.label3.Location = new System.Drawing.Point(60, 21);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(34, 13);
             this.label3.TabIndex = 8;
@@ -163,7 +169,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(134, 113);
+            this.label4.Location = new System.Drawing.Point(60, 47);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(26, 13);
             this.label4.TabIndex = 9;
@@ -173,19 +179,19 @@
             // 
             this.EndDateTime.CustomFormat = "MM\'/\'dd\'/\'yyyy hh\':\'mm\':\'ss tt ";
             this.EndDateTime.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.EndDateTime.Location = new System.Drawing.Point(181, 110);
+            this.EndDateTime.Location = new System.Drawing.Point(107, 44);
             this.EndDateTime.Name = "EndDateTime";
             this.EndDateTime.Size = new System.Drawing.Size(174, 20);
-            this.EndDateTime.TabIndex = 6;
+            this.EndDateTime.TabIndex = 2;
             this.EndDateTime.ValueChanged += new System.EventHandler(this.EndDateTime_ValueChanged);
             // 
             // UTC
             // 
             this.UTC.AutoSize = true;
-            this.UTC.Location = new System.Drawing.Point(71, 96);
+            this.UTC.Location = new System.Drawing.Point(6, 30);
             this.UTC.Name = "UTC";
             this.UTC.Size = new System.Drawing.Size(48, 17);
-            this.UTC.TabIndex = 4;
+            this.UTC.TabIndex = 0;
             this.UTC.Text = "UTC";
             this.toolTip1.SetToolTip(this.UTC, "Show the begin and end times in Coordinated Universal Time.");
             this.UTC.UseVisualStyleBackColor = true;
@@ -194,7 +200,7 @@
             // BeginPartitionKey
             // 
             this.BeginPartitionKey.Enabled = false;
-            this.BeginPartitionKey.Location = new System.Drawing.Point(361, 84);
+            this.BeginPartitionKey.Location = new System.Drawing.Point(287, 18);
             this.BeginPartitionKey.Name = "BeginPartitionKey";
             this.BeginPartitionKey.Size = new System.Drawing.Size(186, 20);
             this.BeginPartitionKey.TabIndex = 10;
@@ -202,7 +208,7 @@
             // EndPartitionKey
             // 
             this.EndPartitionKey.Enabled = false;
-            this.EndPartitionKey.Location = new System.Drawing.Point(361, 110);
+            this.EndPartitionKey.Location = new System.Drawing.Point(287, 44);
             this.EndPartitionKey.Name = "EndPartitionKey";
             this.EndPartitionKey.Size = new System.Drawing.Size(186, 20);
             this.EndPartitionKey.TabIndex = 11;
@@ -302,6 +308,8 @@
             // 
             this.grpAzure.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpAzure.Controls.Add(this.grpTimeframe);
+            this.grpAzure.Controls.Add(this.grpFetchTo);
             this.grpAzure.Controls.Add(this.RecordsCached);
             this.grpAzure.Controls.Add(this.label7);
             this.grpAzure.Controls.Add(this.ConnectionNickname);
@@ -310,20 +318,68 @@
             this.grpAzure.Controls.Add(this.label2);
             this.grpAzure.Controls.Add(this.RememberConnection);
             this.grpAzure.Controls.Add(this.ForgetConnection);
-            this.grpAzure.Controls.Add(this.UTC);
-            this.grpAzure.Controls.Add(this.BeginDateTime);
-            this.grpAzure.Controls.Add(this.BeginPartitionKey);
-            this.grpAzure.Controls.Add(this.label3);
-            this.grpAzure.Controls.Add(this.label4);
-            this.grpAzure.Controls.Add(this.EndDateTime);
             this.grpAzure.Controls.Add(this.btnFetchFromAzure);
-            this.grpAzure.Controls.Add(this.EndPartitionKey);
             this.grpAzure.Location = new System.Drawing.Point(12, 12);
             this.grpAzure.Name = "grpAzure";
             this.grpAzure.Size = new System.Drawing.Size(808, 154);
             this.grpAzure.TabIndex = 0;
             this.grpAzure.TabStop = false;
             this.grpAzure.Text = "Step 1: Fetch from Azure";
+            // 
+            // grpTimeframe
+            // 
+            this.grpTimeframe.Controls.Add(this.UTC);
+            this.grpTimeframe.Controls.Add(this.BeginDateTime);
+            this.grpTimeframe.Controls.Add(this.BeginPartitionKey);
+            this.grpTimeframe.Controls.Add(this.label3);
+            this.grpTimeframe.Controls.Add(this.label4);
+            this.grpTimeframe.Controls.Add(this.EndDateTime);
+            this.grpTimeframe.Controls.Add(this.EndPartitionKey);
+            this.grpTimeframe.Location = new System.Drawing.Point(9, 66);
+            this.grpTimeframe.Name = "grpTimeframe";
+            this.grpTimeframe.Size = new System.Drawing.Size(480, 77);
+            this.grpTimeframe.TabIndex = 4;
+            this.grpTimeframe.TabStop = false;
+            this.grpTimeframe.Text = "Timeframe";
+            this.toolTip1.SetToolTip(this.grpTimeframe, "The timeframe you\'d like to fetch logs for");
+            // 
+            // grpFetchTo
+            // 
+            this.grpFetchTo.Controls.Add(this.FetchToDisk);
+            this.grpFetchTo.Controls.Add(this.FetchToMemory);
+            this.grpFetchTo.Location = new System.Drawing.Point(495, 67);
+            this.grpFetchTo.Name = "grpFetchTo";
+            this.grpFetchTo.Size = new System.Drawing.Size(74, 76);
+            this.grpFetchTo.TabIndex = 5;
+            this.grpFetchTo.TabStop = false;
+            this.grpFetchTo.Text = "Fetch to";
+            this.toolTip1.SetToolTip(this.grpFetchTo, "Where do you want to temporarily cache the logs you fetch?");
+            // 
+            // FetchToDisk
+            // 
+            this.FetchToDisk.AutoSize = true;
+            this.FetchToDisk.Location = new System.Drawing.Point(6, 42);
+            this.FetchToDisk.Name = "FetchToDisk";
+            this.FetchToDisk.Size = new System.Drawing.Size(46, 17);
+            this.FetchToDisk.TabIndex = 1;
+            this.FetchToDisk.TabStop = true;
+            this.FetchToDisk.Text = "Disk";
+            this.toolTip1.SetToolTip(this.FetchToDisk, "Caching on disk is slower than caching in memory, but space is usually plentiful." +
+        "  Recommended for large timeframes.");
+            this.FetchToDisk.UseVisualStyleBackColor = true;
+            // 
+            // FetchToMemory
+            // 
+            this.FetchToMemory.AutoSize = true;
+            this.FetchToMemory.Location = new System.Drawing.Point(6, 19);
+            this.FetchToMemory.Name = "FetchToMemory";
+            this.FetchToMemory.Size = new System.Drawing.Size(62, 17);
+            this.FetchToMemory.TabIndex = 0;
+            this.FetchToMemory.TabStop = true;
+            this.FetchToMemory.Text = "Memory";
+            this.toolTip1.SetToolTip(this.FetchToMemory, "Caching in memory is fast, but space is limited.  Recommended for small timeframe" +
+        "s.");
+            this.FetchToMemory.UseVisualStyleBackColor = true;
             // 
             // RecordsCached
             // 
@@ -342,7 +398,7 @@
             // 
             this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(578, 128);
+            this.label7.Location = new System.Drawing.Point(579, 128);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(73, 13);
             this.label7.TabIndex = 3;
@@ -428,13 +484,17 @@
             this.ClientSize = new System.Drawing.Size(832, 528);
             this.Controls.Add(this.grpLocalSqlFilters);
             this.Controls.Add(this.grpAzure);
-            this.MinimumSize = new System.Drawing.Size(738, 457);
+            this.MinimumSize = new System.Drawing.Size(765, 484);
             this.Name = "MainForm";
             this.Text = "MainForm";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.grpAzure.ResumeLayout(false);
             this.grpAzure.PerformLayout();
+            this.grpTimeframe.ResumeLayout(false);
+            this.grpTimeframe.PerformLayout();
+            this.grpFetchTo.ResumeLayout(false);
+            this.grpFetchTo.PerformLayout();
             this.grpLocalSqlFilters.ResumeLayout(false);
             this.grpLocalSqlFilters.PerformLayout();
             this.ResumeLayout(false);
@@ -475,6 +535,10 @@
         private System.ComponentModel.BackgroundWorker sqlBackgroundWorker;
         private System.Windows.Forms.TextBox RecordsCached;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.GroupBox grpFetchTo;
+        private System.Windows.Forms.RadioButton FetchToDisk;
+        private System.Windows.Forms.RadioButton FetchToMemory;
+        private System.Windows.Forms.GroupBox grpTimeframe;
     }
 }
 

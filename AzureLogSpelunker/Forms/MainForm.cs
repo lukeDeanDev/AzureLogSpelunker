@@ -12,12 +12,11 @@ namespace AzureLogSpelunker.Forms
     public partial class MainForm : Form
     {
         private readonly ISettings _settings = new Settings();
-        private readonly SqlCache _sqlCache;
+        private readonly ISqlCache _sqlCache = new SqlCache();
         private readonly DisplayForm _displayForm = new DisplayForm();
 
         public MainForm()
         {
-            _sqlCache = new SqlCache(_settings);
             InitializeComponent();
         }
 
@@ -31,14 +30,17 @@ namespace AzureLogSpelunker.Forms
             LoadFilters();
             UTC.Checked = _settings.GetUtc();
             ConnectionNickname.Text = _settings.GetLastConnectionNickname();
+            InitializeFetchTo();
             sqliteHelp.Links.Add(0, sqliteHelp.Text.Length, "http://sqlite.org/lang_expr.html");
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            _sqlCache.Close();
             UpdateFilters();
             _settings.SetUtc(UTC.Checked);
             _settings.SetLastConnectionNickname(ConnectionNickname.Text);
+            SaveFetchTo();
         }
 
         #region AzureControls
@@ -90,6 +92,33 @@ namespace AzureLogSpelunker.Forms
         {
             EndPartitionKey.Text = TableStorage.UtcDateTimeToPartitionKey(UTC.Checked ? EndDateTime.Value : EndDateTime.Value.ToUniversalTime());
         }
+
+        private void InitializeFetchTo()
+        {
+            var fetchTo = _settings.GetFetchTo();
+            switch (fetchTo)
+            {
+                case "disk":
+                    FetchToDisk.Checked = true;
+                    break;
+                default:
+                    FetchToMemory.Checked = true;
+                    break;
+            }
+        }
+
+        private void SaveFetchTo()
+        {
+            foreach (var control in grpFetchTo.Controls)
+            {
+                var radioButton = control as RadioButton;
+                if (radioButton != null && radioButton.Checked)
+                {
+                    _settings.SetFetchTo(radioButton.Text.ToLowerInvariant());
+                    break;
+                }
+            }
+        }
         #endregion AzureControls
 
         #region AzureFetch
@@ -125,8 +154,8 @@ namespace AzureLogSpelunker.Forms
             if (model != null)
             {
                 var tableResultSet = model.ResultSet;
-                _sqlCache.PopulateCache(tableResultSet);
-                RecordsCached.Text = _sqlCache.CacheCount().ToString(CultureInfo.InvariantCulture);
+                SaveFetchTo();
+                RecordsCached.Text = _sqlCache.PopulateCache(tableResultSet, _settings).ToString(CultureInfo.InvariantCulture);
                 var dataTable = TableStorage.MakeDataTable<LogEntity>();
                 TableStorage.FillDataTable(dataTable, tableResultSet);
                 //PopulateGrid(dataTable);
@@ -149,7 +178,7 @@ namespace AzureLogSpelunker.Forms
             var dataTable = e.Argument as DataTable;
             try
             {
-                _sqlCache.ApplyFilters(dataTable);
+                _sqlCache.ApplyFilters(dataTable, _settings);
             }
             catch (SQLiteException ex)
             {
@@ -289,7 +318,7 @@ namespace AzureLogSpelunker.Forms
             }
             cbFilters.Enabled = true;
             _settings.UpdateFilters(filterList);
-            sqlComputed.Text = _sqlCache.ComputeSql();
+            sqlComputed.Text = _sqlCache.ComputeSql(_settings);
         }
         #endregion Filters
 

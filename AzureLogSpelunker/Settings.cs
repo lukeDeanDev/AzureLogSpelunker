@@ -10,6 +10,7 @@ namespace AzureLogSpelunker
 
     public interface ISettings
     {
+        string MyApplicationDataPath { get; }
         IList<string> GetConnectionStrings();
         string GetConnectionString(string name);
         int SetConnectionString(string name, string connectionString);
@@ -28,11 +29,14 @@ namespace AzureLogSpelunker
         int SetLastExportPath(string lastExportPath);
         bool GetWordwrap();
         int SetWordwrap(bool wordwrap);
+        string GetFetchTo();
+        int SetFetchTo(string choice);
     }
 
     public class Settings : ISettings
     {
         private readonly string _connectionString;
+        private readonly string _myApplicationDataPath;
         private const string ConnectionStringsTable = "ConnectionStrings";
         private const string FiltersTable = "Filters";
         private const string UiTable = "UI";
@@ -41,9 +45,9 @@ namespace AzureLogSpelunker
         public Settings()
         {
             var applicationDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var myApplicationDataPath = Path.Combine(applicationDataPath, "AzureLogSpelunker");
-            Directory.CreateDirectory(myApplicationDataPath);
-            var myDataFile = Path.Combine(myApplicationDataPath, "AzureLogSpelunker.db");
+            _myApplicationDataPath = Path.Combine(applicationDataPath, "AzureLogSpelunker");
+            Directory.CreateDirectory(_myApplicationDataPath);
+            var myDataFile = Path.Combine(_myApplicationDataPath, "AzureLogSpelunker.db");
             _connectionString = "Data Source=" + myDataFile + ";";
 
             using (var connection = new SQLiteConnection(_connectionString).OpenAndReturn())
@@ -53,6 +57,11 @@ namespace AzureLogSpelunker
                 InitializeUiTable(connection);
                 InitializeColumnsTable(connection);
             }
+        }
+
+        public string MyApplicationDataPath
+        {
+            get { return _myApplicationDataPath; }
         }
 
         #region ConnectionStrings
@@ -303,6 +312,16 @@ namespace AzureLogSpelunker
         public int SetLastExportPath(string lastExportPath)
         {
             return SetUiParameter("LastExportPath", lastExportPath);
+        }
+
+        public string GetFetchTo()
+        {
+            return GetUiParameter("FetchTo");
+        }
+
+        public int SetFetchTo(string choice)
+        {
+            return SetUiParameter("FetchTo", choice);
         }
 
         private string GetUiParameter(string parameter)

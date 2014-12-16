@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Forms;
 using AzureLogSpelunker.Models;
 
@@ -44,6 +45,14 @@ namespace AzureLogSpelunker.Forms
         }
 
         #region AzureControls
+
+        private void ResetTableNameCombo()
+        {
+            cmbTableNames.Items.Clear();
+            cmbTableNames.Items.Add("WADLogsTable");
+            cmbTableNames.SelectedItem = cmbTableNames.Items[0];
+        }
+
         private void ConnectionNickname_SelectedIndexChanged(object sender, EventArgs e)
         {
             ConnectionString.Text = _settings.GetConnectionString(ConnectionNickname.Text);
@@ -128,6 +137,7 @@ namespace AzureLogSpelunker.Forms
             var model = new AzureQueryModel
             {
                 ConnectionString = ConnectionString.Text,
+                TableName = cmbTableNames.Text,
                 BeginPartitionKey = BeginPartitionKey.Text,
                 EndPartitionKey = EndPartitionKey.Text
             };
@@ -139,7 +149,7 @@ namespace AzureLogSpelunker.Forms
             try
             {
                 var model = (AzureQueryModel)e.Argument;
-                model.ResultSet = TableStorage.Go(model.ConnectionString, model.BeginPartitionKey, model.EndPartitionKey);
+                model.ResultSet = TableStorage.Go(model.ConnectionString, model.TableName, model.BeginPartitionKey, model.EndPartitionKey);
                 e.Result = model;
             }
             catch (Exception ex)
@@ -250,6 +260,23 @@ namespace AzureLogSpelunker.Forms
             }
         }
 
+        private void btnTop_Click(object sender, EventArgs e)
+        {
+            var thisIndex = cbFilters.SelectedIndex;
+            if (thisIndex > 0)
+            {
+                var thisItem = cbFilters.SelectedItem;
+                var thisCheckedState = cbFilters.GetItemCheckState(thisIndex);
+
+                cbFilters.Items.RemoveAt(thisIndex);
+                cbFilters.Items.Insert(0, thisItem);
+
+                cbFilters.SetItemCheckState(0, thisCheckedState);
+                cbFilters.SelectedIndex = 0;
+                UpdateFilters();
+            }
+        }
+
         private void btUp_Click(object sender, EventArgs e)
         {
             var thisIndex = cbFilters.SelectedIndex;
@@ -278,6 +305,23 @@ namespace AzureLogSpelunker.Forms
                 cbFilters.Items[thisIndex + 1] = thisItem;
                 cbFilters.SetItemCheckState(thisIndex + 1, thisCheckedState);
                 cbFilters.SelectedIndex += 1;
+                UpdateFilters();
+            }
+        }
+
+        private void btnBottom_Click(object sender, EventArgs e)
+        {
+            var thisIndex = cbFilters.SelectedIndex;
+            if (thisIndex != -1 && thisIndex < cbFilters.Items.Count - 1)
+            {
+                var thisItem = cbFilters.SelectedItem;
+                var thisCheckedState = cbFilters.GetItemCheckState(thisIndex);
+
+                cbFilters.Items.RemoveAt(thisIndex);
+                cbFilters.Items.Add(thisItem, thisCheckedState);
+
+                cbFilters.SelectedIndex = cbFilters.Items.Count - 1;
+
                 UpdateFilters();
             }
         }
@@ -320,6 +364,21 @@ namespace AzureLogSpelunker.Forms
             _settings.UpdateFilters(filterList);
             sqlComputed.Text = _sqlCache.ComputeSql(_settings);
         }
+
+        private void btnQuickFilter_Click(object sender, EventArgs e)
+        {
+            var filterText = tbFilter.Text;
+            filterText = filterText.Trim();
+            // Insert the filter to the front of the list (as if they clicked "+")
+            btAdd_Click(sender, e);
+            // Run the ApplySql
+            btnApplySqlFilters_Click(sender, e);
+            // Remove the filter
+            btDelete_Click(sender, e);
+            // Reset the text on the filter edit since it got cleared
+            tbFilter.Text = filterText;
+        }
+
         #endregion Filters
 
         public static void MyMessageBox(string text)
@@ -344,6 +403,46 @@ namespace AzureLogSpelunker.Forms
             grpAzure.Enabled = true;
             grpLocalSqlFilters.Enabled = true;
             UseWaitCursor = false;
+        }
+
+        private void cmbTableNames_DropDown(object sender, EventArgs e)
+        {
+            var oldCursor = Cursor.Current;
+            try
+            {
+                Cursor.Current = Cursors.WaitCursor;
+                string oldText = cmbTableNames.Text;
+                cmbTableNames.Items.Clear();
+                cmbTableNames.Items.AddRange(TableStorage.GetTableNames(ConnectionString.Text).ToArray());
+                // Find the index of the previously set name
+                int newIndex = cmbTableNames.Items.IndexOf(oldText);
+                cmbTableNames.SelectedItem = newIndex >= 0 ? cmbTableNames.Items[newIndex] : cmbTableNames.Items[0];
+
+            }
+            catch (Exception ex)
+            {
+                cmbTableNames.Items.Clear();
+                cmbTableNames.Items.Add(ex.Message);
+                cmbTableNames.SelectedItem = cmbTableNames.Items[0];
+            }
+            finally
+            {
+                Cursor.Current = oldCursor;
+            }
+        }
+
+        private void ConnectionString_TextChanged(object sender, EventArgs e)
+        {
+            ResetTableNameCombo();
+        }
+
+        private void tbFilter_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                btnQuickFilter.PerformClick();
+                e.SuppressKeyPress = true;
+            }
         }
     }
 }

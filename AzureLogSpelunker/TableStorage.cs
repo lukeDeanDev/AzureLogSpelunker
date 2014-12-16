@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using AzureLogSpelunker.Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -17,14 +18,22 @@ namespace AzureLogSpelunker
             return retVal;
         }
 
-        public static IEnumerable<LogEntity> Go(string connectionString, string beginPartitionKey, string endPartitionKey)
+        public static IEnumerable<string> GetTableNames(string connectionString)
         {
             var storageAccount = connectionString == "UseDevelopmentStorage=true" ? CloudStorageAccount.DevelopmentStorageAccount : CloudStorageAccount.Parse(connectionString);
             var tableClient = storageAccount.CreateCloudTableClient();
 
-            var table = tableClient.GetTableReference("WADLogsTable");
+            return tableClient.ListTables().Select(table => table.Name).ToList();
+        }
+
+        public static IEnumerable<LogEntity> Go(string connectionString, string tableName, string beginPartitionKey, string endPartitionKey)
+        {
+            var storageAccount = connectionString == "UseDevelopmentStorage=true" ? CloudStorageAccount.DevelopmentStorageAccount : CloudStorageAccount.Parse(connectionString);
+            var tableClient = storageAccount.CreateCloudTableClient();
+
+            var table = tableClient.GetTableReference(tableName);
             if (!table.Exists())
-                throw new ApplicationException("WADLogsTable does not exist");
+                throw new ApplicationException(string.Format("{0} does not exist", tableName));
 
 
             var query = new TableQuery<LogEntity>().Where(

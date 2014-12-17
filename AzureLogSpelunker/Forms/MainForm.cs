@@ -15,6 +15,7 @@ namespace AzureLogSpelunker.Forms
         private readonly ISettings _settings = new Settings();
         private readonly ISqlCache _sqlCache = new SqlCache();
         private readonly DisplayForm _displayForm = new DisplayForm();
+        private string _quickFilter = "";
 
         public MainForm()
         {
@@ -175,20 +176,31 @@ namespace AzureLogSpelunker.Forms
         #endregion AzureFetch
 
         #region ApplySql
+
+        private class WorkArgument
+        {
+            public DataTable DataTable { get; set; }
+            public string QuickFilter { get; set; }
+        }
+
         private void btnApplySqlFilters_Click(object sender, EventArgs e)
         {
             UpdateFilters();
             DisableGroups();
-            var dataTable = TableStorage.MakeDataTable<LogEntity>();
-            sqlBackgroundWorker.RunWorkerAsync(dataTable);
+            var workArgument = new WorkArgument
+            {
+                DataTable = TableStorage.MakeDataTable<LogEntity>(),
+                QuickFilter = _quickFilter
+            };
+            sqlBackgroundWorker.RunWorkerAsync(workArgument);
         }
 
         private void sqlBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var dataTable = e.Argument as DataTable;
+            var workArgument = e.Argument as WorkArgument;
             try
             {
-                _sqlCache.ApplyFilters(dataTable, _settings);
+                _sqlCache.ApplyFilters(workArgument.DataTable, _settings, workArgument.QuickFilter);
             }
             catch (SQLiteException ex)
             {
@@ -196,14 +208,14 @@ namespace AzureLogSpelunker.Forms
             }
             finally
             {
-                e.Result = dataTable;
+                e.Result = workArgument;
             }
         }
 
         private void sqlBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             EnableGroups();
-            var dataTable = e.Result as DataTable;
+            var dataTable = (e.Result as WorkArgument).DataTable;
             PopulateGrid(dataTable);
         }
 
@@ -362,19 +374,18 @@ namespace AzureLogSpelunker.Forms
             }
             cbFilters.Enabled = true;
             _settings.UpdateFilters(filterList);
-            sqlComputed.Text = _sqlCache.ComputeSql(_settings);
+            sqlComputed.Text = _sqlCache.ComputeSql(_settings, _quickFilter);
         }
 
         private void btnQuickFilter_Click(object sender, EventArgs e)
         {
             var filterText = tbFilter.Text;
-            filterText = filterText.Trim();
-            // Insert the filter to the front of the list (as if they clicked "+")
-            btAdd_Click(sender, e);
+            // Set the quickFilter
+            _quickFilter = filterText.Trim();
             // Run the ApplySql
             btnApplySqlFilters_Click(sender, e);
-            // Remove the filter
-            btDelete_Click(sender, e);
+            // Clear the quickFilter
+            _quickFilter = "";
             // Reset the text on the filter edit since it got cleared
             tbFilter.Text = filterText;
         }

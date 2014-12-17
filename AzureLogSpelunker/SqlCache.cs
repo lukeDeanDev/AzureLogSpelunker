@@ -10,8 +10,8 @@ namespace AzureLogSpelunker
     public interface ISqlCache
     {
         long PopulateCache(IEnumerable<LogEntity> resultSet, ISettings settings);
-        string ApplyFilters(DataTable dataTable, ISettings settings);
-        string ComputeSql(ISettings settings);
+        string ApplyFilters(DataTable dataTable, ISettings settings, string quickFilter);
+        string ComputeSql(ISettings settings, string quickFilter);
         void Close();
     }
 
@@ -63,9 +63,9 @@ namespace AzureLogSpelunker
         }
 
         //This method is vulnerable to SQL injection attacks, but that's kinda the point of this application.
-        public string ApplyFilters(DataTable dataTable, ISettings settings)
+        public string ApplyFilters(DataTable dataTable, ISettings settings, string quickFilter)
         {
-            var sql = ComputeSql(settings);
+            var sql = ComputeSql(settings, quickFilter);
             if (Connection != null)
             {
                 var da = new SQLiteDataAdapter(sql, Connection);
@@ -75,9 +75,9 @@ namespace AzureLogSpelunker
             return sql;
         }
 
-        public string ComputeSql(ISettings settings)
+        public string ComputeSql(ISettings settings, string quickFilter)
         {
-            return "SELECT RowId,* FROM " + TableName + WhereClause(settings);
+            return "SELECT RowId,* FROM " + TableName + WhereClause(settings, quickFilter);
         }
 
         public void Close()
@@ -165,7 +165,7 @@ namespace AzureLogSpelunker
             throw new ApplicationException("Unexpected type: " + t);
         }
 
-        private static string WhereClause(ISettings settings)
+        private static string WhereClause(ISettings settings, string quickFilter)
         {
             var whereClause = String.Empty;
             foreach (var filter in settings.GetFilters())
@@ -178,6 +178,14 @@ namespace AzureLogSpelunker
                         whereClause += " AND ";
                     whereClause += filter.FilterText;
                 }
+            }
+            if (!String.IsNullOrEmpty(quickFilter))
+            {
+                if (String.IsNullOrEmpty(whereClause))
+                    whereClause = " WHERE ";
+                else
+                    whereClause += " AND ";
+                whereClause += quickFilter;
             }
             return whereClause;
         }

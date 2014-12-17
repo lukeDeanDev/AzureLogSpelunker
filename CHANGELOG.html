@@ -5,25 +5,42 @@
 </head>
 <body>
     <h1>AzureLogSpelunker release notes</h1>
-
+    <h2>v1.2.1.0 (2014-12-17)</h2>
+    Thanks to Jeff Vega (jvega-sage) for these contributions.
+    <ul>
+        <li>
+            It is now possible to work with WADLogsTables with nonstandard names.
+            A "Table" control allows you to select a table name from a list fetched from the Azure
+            storage account referenced by the current connection string.  Note that this preference
+            is not stored.
+        </li>
+        <li>New buttons allow moving filters directly to the top or bottom of the list.</li>
+        <li>
+            Quickfiltering is implemented.  After you've typed a new filter into the box, you may press
+            the ENTER key or the new lightning bolt button to immediately apply that filter, in addition
+            to any filters already selected to be applied, to the cached dataset.  The Quickfilter is
+            temporary.  It is not saved in the list of filters.
+        </li>
+    </ul>
     <h2>v1.2.0.0 (2014-05-10)</h2>
     <ul>
         <li>Made with Visual Studio 2013, System.Data.SQLite 1.0.92, and WindowsAzure.Storage 3.2.0</li>
-        <li>The option to use disk space instead of system memory for temporary SQLite storage was added.
-            This allows for larger datasets to be fetched from Azure.</li>
+        <li>
+            The option to use disk space instead of system memory for temporary SQLite storage was added.
+            This allows for larger datasets to be fetched from Azure.
+        </li>
     </ul>
-
     <h2>v1.1.0.0 (2013-12-07)</h2>
     <ul>
         <li>The number of rows in the SQLite cache is now displayed below the "Fetch from Azure" button.</li>
-        <li>The SQLite "RowId" column is available in the display grid.
-            Use the "Preferences" button below the grid to add it to your view.</li>
+        <li>
+            The SQLite "RowId" column is available in the display grid.
+            Use the "Preferences" button below the grid to add it to your view.
+        </li>
     </ul>
-
     <h2>v1.0.0.0 (2013-11-23)</h2>
     <ul>
         <li>Initial release</li>
     </ul>
-
 </body>
 </html>

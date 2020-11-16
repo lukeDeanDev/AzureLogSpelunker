@@ -134,15 +134,25 @@ namespace AzureLogSpelunker.Forms
         #region AzureFetch
         private void btnFetchFromAzure_Click(object sender, EventArgs e)
         {
-            DisableGroups();
-            var model = new AzureQueryModel
+            var oldCursor = Cursor.Current;
+            try
             {
-                ConnectionString = ConnectionString.Text,
-                TableName = cmbTableNames.Text,
-                BeginPartitionKey = BeginPartitionKey.Text,
-                EndPartitionKey = EndPartitionKey.Text
-            };
-            azureBackgroundWorker.RunWorkerAsync(model);
+                Cursor.Current = Cursors.AppStarting;
+                AutoSelectTable();
+                DisableGroups();
+                var model = new AzureQueryModel
+                {
+                    ConnectionString = ConnectionString.Text,
+                    TableName = cmbTableNames.Text,
+                    BeginPartitionKey = BeginPartitionKey.Text,
+                    EndPartitionKey = EndPartitionKey.Text
+                };
+                azureBackgroundWorker.RunWorkerAsync(model);
+            }
+            finally
+            {
+                Cursor.Current = oldCursor;
+            }
         }
 
         private void azureBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -453,6 +463,28 @@ namespace AzureLogSpelunker.Forms
             {
                 btnQuickFilter.PerformClick();
                 e.SuppressKeyPress = true;
+            }
+        }
+
+        private void chkAutoSelectTable_CheckedChanged(object sender, EventArgs e)
+        {
+            cmbTableNames.Enabled = chkAutoSelectTable.Checked;
+        }
+
+        private void AutoSelectTable()
+        {
+            if (chkAutoSelectTable.Checked)
+            {
+                // Confirm that the drop down has been populated...
+                if (cmbTableNames.Items.Count == 1)
+                {
+                    cmbTableNames.Items.Clear();
+                    cmbTableNames.Items.AddRange(TableStorage.GetTableNames(ConnectionString.Text).ToArray());
+                }
+                // Pattern is WADLogsTableArchiveYYYYMM
+                string targetTable = "WADLogsTableArchive" + BeginDateTime.Value.ToString("yyyyMM");
+                int newIndex = cmbTableNames.Items.IndexOf(targetTable);
+                cmbTableNames.SelectedItem = newIndex >= 0 ? cmbTableNames.Items[newIndex] : cmbTableNames.Items[0];
             }
         }
     }

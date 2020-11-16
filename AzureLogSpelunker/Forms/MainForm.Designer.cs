@@ -71,6 +71,7 @@
             this.sqliteHelp = new System.Windows.Forms.LinkLabel();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.sqlBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.chkAutoSelectTable = new System.Windows.Forms.CheckBox();
             this.grpAzure.SuspendLayout();
             this.grpTimeframe.SuspendLayout();
             this.grpFetchTo.SuspendLayout();
@@ -315,6 +316,7 @@
             // 
             this.grpAzure.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpAzure.Controls.Add(this.chkAutoSelectTable);
             this.grpAzure.Controls.Add(this.lblTableCombo);
             this.grpAzure.Controls.Add(this.cmbTableNames);
             this.grpAzure.Controls.Add(this.grpTimeframe);
@@ -347,6 +349,7 @@
             // cmbTableNames
             // 
             this.cmbTableNames.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTableNames.Enabled = false;
             this.cmbTableNames.FormattingEnabled = true;
             this.cmbTableNames.Location = new System.Drawing.Point(124, 65);
             this.cmbTableNames.Name = "cmbTableNames";
@@ -544,6 +547,19 @@
             this.sqlBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.sqlBackgroundWorker_DoWork);
             this.sqlBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.sqlBackgroundWorker_RunWorkerCompleted);
             // 
+            // chkAutoSelectTable
+            // 
+            this.chkAutoSelectTable.AutoSize = true;
+            this.chkAutoSelectTable.Checked = true;
+            this.chkAutoSelectTable.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkAutoSelectTable.Location = new System.Drawing.Point(352, 67);
+            this.chkAutoSelectTable.Name = "chkAutoSelectTable";
+            this.chkAutoSelectTable.Size = new System.Drawing.Size(234, 17);
+            this.chkAutoSelectTable.TabIndex = 9;
+            this.chkAutoSelectTable.Text = "Autoselect table based on Timeframe::Begin";
+            this.chkAutoSelectTable.UseVisualStyleBackColor = true;
+            this.chkAutoSelectTable.CheckedChanged += new System.EventHandler(this.chkAutoSelectTable_CheckedChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -611,6 +627,7 @@
         private System.Windows.Forms.Button btnQuickFilter;
         private System.Windows.Forms.Label lblTableCombo;
         private System.Windows.Forms.ComboBox cmbTableNames;
+        private System.Windows.Forms.CheckBox chkAutoSelectTable;
     }
 }
 
